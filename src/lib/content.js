@@ -45,11 +45,25 @@ class BodyParser {
     };
   }
 
+  __parseXML() {
+    var beautifiedXmlText = new XmlBeautify().beautify(this.body.text,
+      {
+        indent: "  ", //indent pattern like white spaces
+        useSelfClosingElement: true //true:use self-closing element when empty element.
+      });
+    var escapedXmlText = this.__escapeXml(beautifiedXmlText);
+    return {
+      type: 'plain',
+      note: 'XML',
+      text: `<pre lang="xml">${escapedXmlText}</pre>`
+    };
+  }
+
   __parsePlain() {
     return {
       type: 'plain',
       note: 'raw',
-      text: `<pre>${this.body.text}</pre>`
+      text: `<pre></pre>`
     };
   }
 
@@ -57,12 +71,26 @@ class BodyParser {
     switch (this.mime) {
       case 'application/json':
         return this.__parseJSON();
+      case 'application/xml':
+        return this.__parseXML();
       case 'multipart/form-data':
       case 'application/x-www-form-urlencoded':
         return this.__parseMultipart();
       default:
         return this.__parsePlain();
     }
+  }
+
+  __escapeXml(unsafe) {
+    return unsafe.replace(/[<>&'"]/g, function (c) {
+      switch (c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '&': return '&amp;';
+        case '\'': return '&apos;';
+        case '"': return '&quot;';
+      }
+    });
   }
 }
 
